@@ -65,7 +65,7 @@ function menu_export_export_form($form, &$form_state) {
   ob_start();
   echo '$menu = new StdClass();' . "\n";
   foreach ($menu as $k => $v) {
-    echo '$menu->' . $k . ' = "' . $v . '";' . "\n";
+    echo '$menu->' . $k . ' = "' . addslashes($v) . '";' . "\n";
   }
   echo '$menu->items = array();' . "\n";
   _menu_export_parse_menu($elements, '$menu->items');
@@ -91,7 +91,7 @@ function _menu_export_parse_menu($elements, $key) {
   foreach ($elements as $element) {
     echo "\n";
     echo $key . '[' . $i . '] = new StdClass();' . "\n";
-    echo $key . '[' . $i . ']->label = "' . $element['link']['title'] . '";' . "\n";
+    echo $key . '[' . $i . ']->label = "' . addslashes($element['link']['title']) . '";' . "\n";
     echo $key . '[' . $i . ']->path = "' . $element['link']['href'] . '";' . "\n";
     echo $key . '[' . $i . ']->weight = ' . $i . ';' . "\n";
 
