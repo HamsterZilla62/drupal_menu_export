@@ -1,0 +1,9 @@
+; $Id
+name = Menu Export
+description = Export menu hierarchy.
+package = Development
+core = 7.x
+
+dependencies[] = menu
+
+configure = admin/config/system/menu_export

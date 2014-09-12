@@ -1,0 +1,143 @@
+<?php
+/**
+ * @file
+ * Module's main file, general definitions and hooks.
+ */
+
+/**
+ * Implements hook_menu().
+ */
+function menu_export_menu() {
+  $items = array();
+
+  $items['admin/config/system/menu_export'] = array(
+    'title' => 'Export menu',
+    'description' => 'Used to export menu into file',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('menu_export_list_export_form'),
+    'access arguments' => array("administer menu"),
+    'weight' => 11,
+  );
+
+  $items['admin/structure/menu/manage/%/export'] = array(
+    'title' => 'Export menu',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('menu_export_export_form'),
+    'access arguments' => array("administer menu"),
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 11,
+  );
+
+  return $items;
+}
+
+/**
+ * List of all module for the export.
+ */
+function menu_export_list_export_form($form, &$form_state) {
+  $form['menu'] = array(
+    '#type' => 'select',
+    '#title' => "Choisir un menu a exporter",
+    '#options' => menu_get_menus(),
+  );
+
+  $form['submit'] = array('#type' => 'submit', '#value' => t('Export'));
+
+  return $form;
+}
+
+/**
+ * Submit function.
+ */
+function menu_export_list_export_form_submit($form, &$form_state) {
+  $menu_name = $form_state['values']['menu'];
+  drupal_goto("admin/structure/menu/manage/" . $menu_name . "/export");
+}
+
+/**
+ * Display the export.
+ */
+function menu_export_export_form($form, &$form_state) {
+  $menu_name = arg(4);
+  $elements = menu_tree_all_data($menu_name);
+  $menu = menu_load($menu_name);
+
+  ob_start();
+  echo '$menu = new StdClass();' . "\n";
+  foreach ($menu as $k => $v) {
+    echo '$menu->' . $k . ' = "' . $v . '";' . "\n";
+  }
+  echo '$menu->items = array();' . "\n";
+  _menu_export_parse_menu($elements, '$menu->items');
+
+  $out = ob_get_clean();
+
+  $form['export'] = array(
+    '#type' => 'textarea',
+    '#title' => check_plain("Export du menu &laquo;" . $menu['title'] . "&raquo;"),
+    '#default_value' => $out,
+    '#rows' => 30,
+  );
+
+  return $form;
+}
+
+/**
+ * Internal function used for display one item.
+ */
+function _menu_export_parse_menu($elements, $key) {
+  $data = array();
+  $i = 0;
+  foreach ($elements as $element) {
+    echo "\n";
+    echo $key . '[' . $i . '] = new StdClass();' . "\n";
+    echo $key . '[' . $i . ']->label = "' . $element['link']['title'] . '";' . "\n";
+    echo $key . '[' . $i . ']->path = "' . $element['link']['href'] . '";' . "\n";
+    echo $key . '[' . $i . ']->weight = ' . $i . ';' . "\n";
+
+    if (!empty($element['below'])) {
+      echo $key . '[' . $i . ']->items = array();' . "\n";
+      _menu_export_parse_menu($element['below'], $key . '[' . $i . ']->items');
+    }
+    $i++;
+  }
+}
+
+/**
+ * Tool to import menu exported previously.
+ *
+ * @param {object} $menu
+ *   Object created by the export.
+ */
+function menu_export_menu_import($menu) {
+  $elem = array(
+    "menu_name" => $menu->menu_name,
+    "title" => $menu->title,
+    "description" => $menu->description,
+  );
+
+  menu_save($elem);
+
+  if (!empty($menu->items)) {
+    _menu_export_menu_import_menu_item($menu->menu_name, $menu->items);
+  }
+}
+
+/**
+ * Internal function used by menu_export_menu_import() to save one link item.
+ */
+function _menu_export_menu_import_menu_item($menu_name, $items, $plid = 0) {
+  foreach ($items as $item) {
+    $elem = array(
+      "link_path" => $item->path,
+      "link_title" => $item->label,
+      "menu_name" => $menu_name,
+      "weight" => (integer) $item->weight,
+      "plid" => $plid,
+    );
+    $mlid = menu_link_save($elem);
+    if (!empty($item->items)) {
+      _menu_export_menu_import_menu_item($menu_name, $item->items, $mlid);
+    }
+  }
+}
