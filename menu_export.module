@@ -11,7 +11,7 @@ function menu_export_menu() {
   $items = array();
 
   $items['admin/config/system/menu_export'] = array(
-    'title' => 'Export menu',
+    'title' => 'Menu export',
     'description' => 'Used to export menu into file',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('menu_export_list_export_form'),
@@ -20,7 +20,7 @@ function menu_export_menu() {
   );
 
   $items['admin/structure/menu/manage/%/export'] = array(
-    'title' => 'Export menu',
+    'title' => 'Menu export',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('menu_export_export_form'),
     'access arguments' => array("administer menu"),
@@ -37,7 +37,7 @@ function menu_export_menu() {
 function menu_export_list_export_form($form, &$form_state) {
   $form['menu'] = array(
     '#type' => 'select',
-    '#title' => "Choisir un menu a exporter",
+    '#title' => "Choose a menu to export",
     '#options' => menu_get_menus(),
   );
 
@@ -74,7 +74,7 @@ function menu_export_export_form($form, &$form_state) {
 
   $form['export'] = array(
     '#type' => 'textarea',
-    '#title' => check_plain("Export du menu &laquo;" . $menu['title'] . "&raquo;"),
+    '#title' => check_plain("Export of «" . $menu['title'] . "»"),
     '#default_value' => $out,
     '#rows' => 30,
   );
