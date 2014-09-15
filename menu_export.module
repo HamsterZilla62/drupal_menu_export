@@ -105,7 +105,7 @@ function _menu_export_parse_menu($elements, $key) {
 /**
  * Tool to import menu exported previously.
  *
- * @param Object $menu
+ * @param StdClass $menu
  *   Object created by the export.
  */
 function menu_export_menu_import(StdClass $menu) {
