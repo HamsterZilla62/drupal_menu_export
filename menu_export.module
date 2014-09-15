@@ -86,7 +86,6 @@ function menu_export_export_form($form, &$form_state) {
  * Internal function used for display one item.
  */
 function _menu_export_parse_menu($elements, $key) {
-  $data = array();
   $i = 0;
   foreach ($elements as $element) {
     echo "\n";
@@ -106,10 +105,10 @@ function _menu_export_parse_menu($elements, $key) {
 /**
  * Tool to import menu exported previously.
  *
- * @param {Object} $menu
+ * @param $menu
  *   Object created by the export.
  */
-function menu_export_menu_import(StdClass $menu) {
+function menu_export_menu_import($menu) {
   $elem = array(
     "menu_name" => $menu->menu_name,
     "title" => $menu->title,

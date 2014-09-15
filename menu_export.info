@@ -1,4 +1,3 @@
-; $Id
 name = Menu Export
 description = Export menu hierarchy.
 package = Development
