@@ -35,4 +35,4 @@ With that piece of code you will be able to import a bunch of menus : just
 put some **.inc** files into a directory called **menus** inside your
 module **my_module**.
 
-![That's All Falks !](https://33.media.tumblr.com/tumblr_m7xpvp6wtZ1qarcjno1_500.gif)
+![That's All Falks !](http://goo.gl/EOidtZ)
