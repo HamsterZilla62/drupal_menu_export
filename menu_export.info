@@ -3,7 +3,6 @@ name = Menu Export
 description = Export menu hierarchy.
 package = Development
 core = 7.x
-version = 7.x-1.0
 
 dependencies[] = menu
 
