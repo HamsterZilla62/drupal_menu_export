@@ -134,7 +134,7 @@ function menu_export_import_form($form, &$form_state) {
  * Submit function.
  */
 function menu_export_import_form_submit($form, &$form_state) {
-  $menu = null;
+  $menu = NULL;
   $code = _menu_export_sanitize_string($form_state['values']['import']);
 
   // eval() function has known security risk.
