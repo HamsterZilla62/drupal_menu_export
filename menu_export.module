@@ -4,6 +4,32 @@
  * Module's main file, general definitions and hooks.
  */
 
+
+/**
+ * Implements hook_help().
+ */
+function menu_export_help($path, $arg) {
+  switch ($path) {
+    case 'admin/help#menu_export':
+      return '<p>' . t("Menu Export is a Drupal 7 module to export menus easily.") . '</p>';
+  }
+}
+
+/**
+ * Implements hook_permission().
+ */
+function menu_export_permission() {
+  return array(
+    'administer menu export' => array(
+      'title' => t('Administer menu exporter'),
+    ),
+    'administer menu import' => array(
+      'title' => t('Administer menu importer'),
+      'description' => t('Warning: Give to trusted roles only; this permission has security implications.'),
+    ),
+  );
+}
+
 /**
  * Implements hook_menu().
  */
@@ -15,15 +41,24 @@ function menu_export_menu() {
     'description' => 'Used to export menu into file',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('menu_export_list_export_form'),
-    'access arguments' => array("administer menu"),
+    'access arguments' => array("administer menu export"),
     'weight' => 11,
   );
 
   $items['admin/structure/menu/manage/%/export'] = array(
-    'title' => 'Menu export',
+    'title' => 'Export',
     'page callback' => 'drupal_get_form',
-    'page arguments' => array('menu_export_export_form'),
-    'access arguments' => array("administer menu"),
+    'page arguments' => array('menu_export_export_form', 4),
+    'access arguments' => array("administer menu export"),
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 11,
+  );
+
+  $items['admin/structure/menu/import'] = array(
+    'title' => 'Import',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('menu_export_import_form'),
+    'access arguments' => array("administer menu import"),
     'type' => MENU_LOCAL_TASK,
     'weight' => 11,
   );
@@ -37,7 +72,7 @@ function menu_export_menu() {
 function menu_export_list_export_form($form, &$form_state) {
   $form['menu'] = array(
     '#type' => 'select',
-    '#title' => "Choose a menu to export",
+    '#title' => t("Choose a menu to export"),
     '#options' => menu_get_menus(),
   );
 
@@ -57,8 +92,7 @@ function menu_export_list_export_form_submit($form, &$form_state) {
 /**
  * Display the export.
  */
-function menu_export_export_form($form, &$form_state) {
-  $menu_name = arg(4);
+function menu_export_export_form($form, &$form_state, $menu_name) {
   $elements = menu_tree_all_data($menu_name);
   $menu = menu_load($menu_name);
 
@@ -80,6 +114,49 @@ function menu_export_export_form($form, &$form_state) {
   );
 
   return $form;
+}
+
+/**
+ * Display the import.
+ */
+function menu_export_import_form($form, &$form_state) {
+  $form['import'] = array(
+    '#type' => 'textarea',
+    '#title' => 'Paste menu code here',
+    '#rows' => 30,
+  );
+
+  $form['submit'] = array('#type' => 'submit', '#value' => t('Import'));
+
+  return $form;
+}
+
+/**
+ * Submit function.
+ */
+function menu_export_import_form_submit($form, &$form_state) {
+  $code = _menu_export_sanitize_string($form_state['values']['import']);
+
+  // eval() function has known security risk.
+  // $code variable passed is previously sanitised
+  // and exclusive permission added.
+  ob_start();
+  // @ignore security_19 1
+  eval($code);
+  ob_end_clean();
+
+  if (!empty($menu) && is_object($menu)) {
+    if (menu_export_menu_import($menu)) {
+      drupal_set_message(t('Menu correctly imported'));
+      $form_state['redirect'] = "admin/structure/menu/manage/" . $menu->menu_name;
+    }
+    else {
+      drupal_set_message(t('The menu already exists.'), 'error');
+    }
+  }
+  else {
+    drupal_set_message(t('An error occurred and processing did not complete.'), 'error');
+  }
 }
 
 /**
@@ -109,17 +186,21 @@ function _menu_export_parse_menu($elements, $key) {
  *   Object created by the export.
  */
 function menu_export_menu_import(StdClass $menu) {
-  $elem = array(
-    "menu_name" => $menu->menu_name,
-    "title" => $menu->title,
-    "description" => $menu->description,
-  );
+  $list_of_menus = menu_get_menus();
+  if (!isset($list_of_menus[$menu->menu_name])) {
+    $elem = array(
+      "menu_name" => $menu->menu_name,
+      "title" => $menu->title,
+      "description" => $menu->description,
+    );
 
-  menu_save($elem);
-
-  if (!empty($menu->items)) {
-    _menu_export_menu_import_menu_item($menu->menu_name, $menu->items);
+    menu_save($elem);
+    if (!empty($menu->items)) {
+      _menu_export_menu_import_menu_item($menu->menu_name, $menu->items);
+    }
+    return TRUE;
   }
+  return FALSE;
 }
 
 /**
@@ -139,4 +220,26 @@ function _menu_export_menu_import_menu_item($menu_name, $items, $plid = 0) {
       _menu_export_menu_import_menu_item($menu_name, $item->items, $mlid);
     }
   }
+}
+
+/**
+ * Internal function used to sanitize.
+ */
+function _menu_export_sanitize_string($code) {
+  $safe_string = array();
+  $string = explode("\n", $code);
+  foreach ($string as $s) {
+    $check = trim($s);
+
+    $test = array(
+      (strpos($check, '$menu') === 0),
+      (substr_count($check, ';') === 1),
+      (strcmp(substr($check, -1), ';') === 0),
+    );
+
+    if ($test[0] && $test[1] && $test[2]) {
+      $safe_string[] = $check;
+    }
+  }
+  return implode($safe_string, "\n");
 }
