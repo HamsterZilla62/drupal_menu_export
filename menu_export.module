@@ -131,9 +131,9 @@ function menu_export_import_form($form, &$form_state) {
 }
 
 /**
- * Submit function.
+ * Validate function.
  */
-function menu_export_import_form_submit($form, &$form_state) {
+function menu_export_import_form_validate($form, &$form_state) {
   $menu = NULL;
   $code = _menu_export_sanitize_string($form_state['values']['import']);
 
@@ -146,17 +146,23 @@ function menu_export_import_form_submit($form, &$form_state) {
   ob_end_clean();
 
   if (!empty($menu) && is_object($menu)) {
-    if (menu_export_menu_import($menu)) {
-      drupal_set_message(t('Menu correctly imported'));
-      $form_state['redirect'] = "admin/structure/menu/manage/" . $menu->menu_name;
-    }
-    else {
-      drupal_set_message(t('The menu already exists.'), 'error');
+    if (!menu_export_menu_import($menu)) {
+      form_set_error('import', t('The menu already exists.'));
     }
   }
   else {
-    drupal_set_message(t('An error occurred and processing did not complete.'), 'error');
+    form_set_error('import', t('An error occurred and processing did not complete.'));
   }
+
+  $form_state['menu'] = &$menu;
+}
+
+/**
+ * Submit function.
+ */
+function menu_export_import_form_submit($form, &$form_state) {
+  drupal_set_message(t('Menu correctly imported'));
+  $form_state['redirect'] = "admin/structure/menu/manage/" . $form_state['menu']->menu_name;
 }
 
 /**
@@ -169,6 +175,7 @@ function _menu_export_parse_menu($elements, $key) {
     echo $key . '[' . $i . '] = new StdClass();' . "\n";
     echo $key . '[' . $i . ']->label = "' . addslashes($element['link']['title']) . '";' . "\n";
     echo $key . '[' . $i . ']->path = "' . $element['link']['href'] . '";' . "\n";
+    echo $key . '[' . $i . ']->hidden = ' . $element['link']['hidden'] . ';' . "\n";
     echo $key . '[' . $i . ']->weight = ' . $i . ';' . "\n";
 
     if (!empty($element['below'])) {
@@ -213,6 +220,7 @@ function _menu_export_menu_import_menu_item($menu_name, $items, $plid = 0) {
       "link_title" => $item->label,
       "menu_name" => $menu_name,
       "weight" => (integer) $item->weight,
+      "hidden" => (!empty($item->hidden)) ? 1 : 0 ,
       "plid" => $plid,
     );
     $mlid = menu_link_save($elem);
