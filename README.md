@@ -15,7 +15,9 @@ Features
 Similar modules
 -----------
 
-Menu Import. The main difference beetwen Menu export and Menu Export/Import is the kind of exported data . Menu Export provide an object structure which helps to import more efficiently, thus a simple cut-and-paste is enough to regenerate to menu. It is also possible to store the data provided inside a file and call the menu_export_menu_import() function inside you hook_install (for example). Menu export aims to provide a structure close to export features provided by ctools or view.
+* Menu Import : The main difference beetwen Menu export and Menu Export/Import is the kind of exported data . Menu Export provide an object structure which helps to import more efficiently, thus a simple cut-and-paste is enough to regenerate to menu. It is also possible to store the data provided inside a file and call the `menu_export_menu_import()` function inside you `hook_install` (for example). Menu export aims to provide a structure close to export features provided by ctools or view.
+ 
+
 We would recommend you to use Menu Export if you need something to deploy faster your project. Nethertheless you should probably have a look to Menu Export/Import if you need something readable and understandable by non-tech person.
 
 Possible improvements
@@ -32,7 +34,9 @@ Requirements
 -----------
 
 Drupal 7 (with the core module "Menu" enabled)
+
 Known issues
+-----------
 
 No conflicts, no incompatibilities or bug known so far.
 
